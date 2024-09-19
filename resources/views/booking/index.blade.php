@@ -3,6 +3,7 @@
 @section('content')
 <div class="container">
     <h1>Bookings</h1>
+
     <a href="{{ route('booking.create') }}" class="btn btn-primary">Book A New Flight</a>
     <table class="table">
         <thead>

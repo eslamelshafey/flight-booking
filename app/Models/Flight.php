@@ -28,10 +28,14 @@ class Flight extends Model
 
         foreach($fillables as $fillable) {
             
-            if(!request()->input($fillable)) continue;
+            if(!in_array($fillable, ['travel_date']) && !request()->input($fillable)) continue;
 
             $q->where($fillable, 'LIKE', '%'.request()->input($fillable).'%');
 
+        }
+
+        if(request()->input('start_date') && request()->input('end_date')) {
+            $q->whereBetween('travel_date', [request()->input("start_date"), request()->input("end_date")]);
         }
 
         return $q->where('available_seats', '>', 0);

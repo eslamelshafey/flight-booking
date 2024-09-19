@@ -11,8 +11,34 @@ class FlightsController extends Controller
 {
     public function index()
     {
+        $cacheKey = null;
+        if(request()->input('departure_city') || request()->input('arrival_city')) {
+            $cacheKey = request()->input('departure_city') . request()->input('arrival_city');
+            $cacheKey = str_replace(' ', '_', strtolower($cacheKey));
+        }
+
+        if($cacheKey) {
+            $flights = Cache::remember($cacheKey, now()->addMinutes(10), function () {
+                return Flight::search()->orderBy('id', "DESC")->paginate(10);
+            });
+        } else {
+            $flights = collect();
+        }
+
+        // dd($flights);
+        
+        if(!$flights->count()) {
+            $flights = Flight::search()->orderBy('id', "DESC")->paginate(10);
+        }
+
+        $cities = Cache::remember('cities', now()->addMinutes(20), function () {
+            return Flight::select('arrival_city', 'departure_city')->get();
+        });
+        
         return view('flights.index', [
-            'flights'=>Flight::orderBy('id', "DESC")->paginate(10)
+            'flights'=>$flights,
+            'departureCities'=>$cities->pluck('departure_city'),
+            'arrivalCities'=>$cities->pluck('arrival_city'),
         ]);
     }
     
@@ -49,25 +75,5 @@ class FlightsController extends Controller
         $flight->delete();
         return redirect()->route('flights.index')->with('success', 'Flight deleted successfully.');
     }
-    
-    public function search(Request $request)
-    {
-        return view('flights.search-results', [
-            'flights'=>Flight::search()->paginate(10),
-        ]);
-    } // end of search
 
-    public function ajaxSearch(Request $request)
-    {
-        $cacheKey = 'flights_search_' . md5($request->departure_city . $request->arrival_city . $request->travel_date);
-        $flights = Cache::remember($cacheKey, 15, function () use ($request) {
-            return Flight::search()->paginate(10);
-        });
-
-        if(!$flights->count()) {
-            $flights = Flight::search()->paginate(10);
-        }
-
-        return view('flights.components.search-results', compact('flights'))->render();
-    } // end of ajaxSearch
 }
