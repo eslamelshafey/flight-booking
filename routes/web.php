@@ -4,15 +4,14 @@ use App\Models\Flight;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect('/home');
-});
 
 Route::middleware(['throttle:10,1'])->group(function () {
     Auth::routes();
 });
 
 Route::group(['namespace'=>'App\\Http\\Controllers'], function () {
+
+    Route::get('/', 'FlightsController@search');
 
     Route::get('/home', 'HomeController@index')->name('home');
     Route::get('/dashboard', 'HomeController@index')->name('dashboard');

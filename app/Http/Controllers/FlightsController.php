@@ -25,8 +25,6 @@ class FlightsController extends Controller
             $flights = collect();
         }
 
-        // dd($flights);
-        
         if(!$flights->count()) {
             $flights = Flight::search()->orderBy('id', "DESC")->paginate(10);
         }
@@ -75,5 +73,16 @@ class FlightsController extends Controller
         $flight->delete();
         return redirect()->route('flights.index')->with('success', 'Flight deleted successfully.');
     }
+
+    public function search() {
+        $cities = Cache::remember('cities', now()->addMinutes(20), function () {
+            return Flight::select('arrival_city', 'departure_city')->get();
+        });
+        
+        return view('flights.search', [
+            'departureCities'=>$cities->pluck('departure_city'),
+            'arrivalCities'=>$cities->pluck('arrival_city'),
+        ]);
+    } // end of search
 
 }
